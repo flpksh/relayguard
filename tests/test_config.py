@@ -1,7 +1,11 @@
 from app.core.config import Settings
 
 
-def test_default_settings() -> None:
+def test_default_settings(monkeypatch: object) -> None:
+    from pytest import MonkeyPatch
+
+    assert isinstance(monkeypatch, MonkeyPatch)
+    monkeypatch.delenv("APP_ENV", raising=False)
     settings = Settings(_env_file=None)
     assert settings.app_name == "RelayGuard"
     assert settings.app_env == "development"
