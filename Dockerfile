@@ -13,4 +13,9 @@ COPY --chown=app:app . .
 RUN chown app:app /app
 USER app
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host $APP_HOST --port $APP_PORT"]
+
+FROM runtime AS development
+USER root
+RUN pip install --no-cache-dir ".[dev]"
+USER app
