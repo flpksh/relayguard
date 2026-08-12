@@ -8,24 +8,24 @@ version = "0.1.0"
 description = "Reliable webhook delivery and observability platform"
 requires-python = ">=3.12"
 dependencies = [
-  "alembic==1.16.5",
-  "asyncpg==0.30.0",
-  "fastapi==0.116.1",
-  "greenlet==3.2.4",
-  "pydantic-settings==2.10.1",
-  "psycopg2-binary==2.9.10",
-  "sqlalchemy==2.0.43",
-  "uvicorn[standard]==0.35.0",
+  "alembic==1.19.1",
+  "asyncpg==0.31.0",
+  "fastapi==0.141.1",
+  "greenlet==3.5.4",
+  "pydantic-settings==2.15.0",
+  "psycopg2-binary==2.9.12",
+  "sqlalchemy==2.0.51",
+  "uvicorn[standard]==0.52.1",
 ]
 
 [project.optional-dependencies]
 dev = [
   "httpx==0.28.1",
-  "pytest==9.0.3",
+  "pytest==9.1.1",
   "pytest-asyncio==1.4.0",
-  "pytest-cov==6.2.1",
-  "ruff==0.12.9",
-  "mypy==1.17.1",
+  "pytest-cov==7.1.0",
+  "ruff==0.16.2",
+  "mypy==2.3.0",
 ]
 
 [tool.setuptools.packages.find]
