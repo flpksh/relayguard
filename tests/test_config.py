@@ -7,6 +7,8 @@ def test_default_settings() -> None:
     assert settings.app_env == "development"
     assert settings.app_port == 8000
 
+    assert settings.sync_database_url.startswith("postgresql+psycopg2://")
+
 
 def test_settings_from_environment(monkeypatch: object) -> None:
     # pytest's monkeypatch type is deliberately avoided in production dependencies.

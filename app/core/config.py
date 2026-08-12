@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     app_port: int = 8000
     database_url: str = "postgresql+asyncpg://relayguard:relayguard@db:5432/relayguard"
 
+    @property
+    def sync_database_url(self) -> str:
+        return self.database_url.replace(
+            "postgresql+asyncpg://", "postgresql+psycopg2://", 1
+        )
+
 
 @lru_cache
 def get_settings() -> Settings:
