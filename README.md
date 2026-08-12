@@ -8,16 +8,17 @@ RelayGuard será uma plataforma multi-tenant para entrega confiável e observáv
 cp .env.example .env
 docker compose up --build -d
 docker compose exec api alembic upgrade head
-curl --fail http://localhost:8000/health/live
-curl --fail http://localhost:8000/health/ready
+curl --fail http://localhost:8010/health/live
+curl --fail http://localhost:8010/health/ready
 ```
 
 ## Qualidade
 
 ```bash
-docker compose exec api pytest --cov=app --cov-report=term-missing
-docker compose exec api ruff check .
-docker compose exec api mypy app tests
+docker compose --profile quality run --rm quality
+docker compose --profile quality run --rm quality ruff check .
+docker compose --profile quality run --rm quality ruff format --check .
+docker compose --profile quality run --rm quality mypy app tests
 ```
 
 ## Endpoints da fundação
@@ -27,3 +28,16 @@ docker compose exec api mypy app tests
 - `GET /docs`: documentação OpenAPI interativa.
 
 O escopo e as decisões da etapa estão registrados em `docs/RELATORIO_ETAPA_01.md`.
+
+## Organização local
+
+O repositório continua se chamando RelayGuard e usa
+`https://github.com/flpksh/relayguard`. A pasta local pode se chamar `rgwh`; o
+nome do projeto Docker permanece `relayguard` por `COMPOSE_PROJECT_NAME`.
+
+A API usa a porta externa `8010` por padrão para poder executar ao mesmo tempo
+que o projeto `api_cnpj`, que usa `8000`. Altere `HOST_PORT` no `.env`
+quando necessário.
+
+Em produção, substitua as credenciais de desenvolvimento do PostgreSQL e
+forneça `DATABASE_URL` por um gerenciador de segredos.
