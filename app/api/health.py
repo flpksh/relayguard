@@ -28,6 +28,6 @@ async def readiness() -> HealthResponse:
     except SQLAlchemyError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="database unavailable",
+            detail="banco de dados indisponível",
         ) from exc
     return HealthResponse(database="connected")
