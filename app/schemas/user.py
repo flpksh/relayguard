@@ -2,13 +2,20 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=12, max_length=128)
     role: Literal["member"] = "member"
+
+    @field_validator("password")
+    @classmethod
+    def reject_blank_password(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("a senha não pode conter somente espaços")
+        return value
 
 
 class UserResponse(BaseModel):

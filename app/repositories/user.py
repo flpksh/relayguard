@@ -23,11 +23,17 @@ class UserRepository:
 
     @staticmethod
     async def list_for_organization(
-        session: AsyncSession, organization_id: UUID
+        session: AsyncSession,
+        organization_id: UUID,
+        *,
+        limit: int,
+        offset: int,
     ) -> list[User]:
         result = await session.execute(
             select(User)
             .where(User.organization_id == organization_id)
             .order_by(User.created_at, User.id)
+            .limit(limit)
+            .offset(offset)
         )
         return list(result.scalars().all())

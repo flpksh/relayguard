@@ -76,7 +76,7 @@ async def test_login_and_invalid_credentials(client: AsyncClient) -> None:
         json={"email": "owner-login@example.com", "password": "wrong"},
     )
     assert invalid.status_code == 401
-    assert invalid.json() == {"detail": "invalid email or password"}
+    assert invalid.json() == {"detail": "e-mail ou senha inválidos"}
 
 
 async def test_owner_can_manage_organization_and_members(
@@ -168,6 +168,8 @@ async def test_rejects_token_with_mismatched_organization(
         str(body["access_token"]),
         settings.access_token_secret.get_secret_value(),
         algorithms=[settings.access_token_algorithm],
+        audience=settings.access_token_audience,
+        issuer=settings.access_token_issuer,
     )
     token["org"] = str(uuid4())
     forged = jwt.encode(

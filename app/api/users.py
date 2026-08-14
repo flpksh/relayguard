@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.dependencies import CurrentUserDep, OwnerDep, SessionDep
 from app.core.exceptions import ConflictError
@@ -11,8 +13,18 @@ router = APIRouter(prefix="/users")
 
 
 @router.get("", response_model=list[UserResponse])
-async def list_users(user: CurrentUserDep, session: SessionDep) -> list[UserResponse]:
-    users = await UserRepository.list_for_organization(session, user.organization_id)
+async def list_users(
+    user: CurrentUserDep,
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> list[UserResponse]:
+    users = await UserRepository.list_for_organization(
+        session,
+        user.organization_id,
+        limit=limit,
+        offset=offset,
+    )
     return [UserResponse.model_validate(value) for value in users]
 
 
@@ -24,7 +36,7 @@ async def add_member(
         session, owner.organization_id
     )
     if organization is None:
-        raise HTTPException(status_code=404, detail="organization not found")
+        raise HTTPException(status_code=404, detail="organização não encontrada")
     try:
         member = await create_member(session, organization, payload)
     except ConflictError as error:

@@ -15,7 +15,17 @@ class RegisterRequest(BaseModel):
     @field_validator("organization_name")
     @classmethod
     def normalize_name(cls, value: str) -> str:
-        return " ".join(value.split())
+        normalized = " ".join(value.split())
+        if len(normalized) < 2:
+            raise ValueError("o nome da organização deve ter pelo menos 2 caracteres")
+        return normalized
+
+    @field_validator("password")
+    @classmethod
+    def reject_blank_password(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("a senha não pode conter somente espaços")
+        return value
 
 
 class LoginRequest(BaseModel):

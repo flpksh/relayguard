@@ -21,19 +21,19 @@ jobs:
       postgres:
         image: postgres:17-alpine
         env:
-          POSTGRES_DB: relayguard
+          POSTGRES_DB: relayguard_test
           POSTGRES_USER: relayguard
           POSTGRES_PASSWORD: relayguard
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U relayguard -d relayguard"
+          --health-cmd "pg_isready -U relayguard -d relayguard_test"
           --health-interval 3s
           --health-timeout 3s
           --health-retries 10
     env:
       APP_ENV: test
-      DATABASE_URL: postgresql+asyncpg://relayguard:relayguard@localhost:5432/relayguard
+      DATABASE_URL: postgresql+asyncpg://relayguard:relayguard@localhost:5432/relayguard_test
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -43,9 +43,47 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: python -m pip install ".[dev]"
       - run: alembic upgrade head
+      - run: alembic downgrade base
+      - run: alembic upgrade head
       - run: pytest --cov=app --cov-report=term-missing
-      - run: ruff check .
-      - run: ruff format --check .
+      - run: ruff check app tests migrations
+      - run: ruff format --check app tests migrations
       - run: mypy app tests
       - run: docker build --check .
       - run: cp .env.example .env && docker compose config --quiet
+
+  compatibility:
+    name: compatibility (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13", "3.14"]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: relayguard_test
+          POSTGRES_USER: relayguard
+          POSTGRES_PASSWORD: relayguard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U relayguard -d relayguard_test"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql+asyncpg://relayguard:relayguard@localhost:5432/relayguard_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install ".[dev]"
+      - run: alembic upgrade head
+      - run: pytest

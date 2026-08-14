@@ -36,4 +36,4 @@ async def test_readiness_when_database_is_unavailable(
     monkeypatch.setattr(health, "session_factory", UnavailableDatabase)
     response = await client.get("/health/ready")
     assert response.status_code == 503
-    assert response.json() == {"detail": "database unavailable"}
+    assert response.json() == {"detail": "banco de dados indisponível"}

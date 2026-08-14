@@ -28,18 +28,22 @@ PostgreSQL. O segredo do token deve ter ao menos 32 caracteres.
 6. `PATCH /organizations/current` altera seu nome, somente como proprietário.
 7. `GET /users` lista apenas usuários da organização atual.
 8. `POST /users` cria um membro, somente como proprietário.
+9. `POST /auth/logout` revoga imediatamente os tokens atuais do usuário.
 
 A especificação interativa completa permanece disponível em `GET /docs`.
+A listagem de usuários aceita `limit` (1 a 100) e `offset`.
 
 ## Qualidade
 
 ```bash
 docker compose exec api alembic upgrade head
-docker compose --profile quality run --rm quality
-docker compose --profile quality run --rm quality ruff check .
-docker compose --profile quality run --rm quality ruff format --check .
-docker compose --profile quality run --rm quality mypy app tests
+docker compose --profile quality run --build --rm quality
+docker compose --profile quality run --build --rm quality ruff check app tests migrations
+docker compose --profile quality run --build --rm quality ruff format --check app tests migrations
+docker compose --profile quality run --build --rm quality mypy app tests
 ```
+
+Os testes usam um PostgreSQL temporário e separado do banco de desenvolvimento.
 
 ## Endpoints de saúde
 
@@ -63,3 +67,14 @@ necessário.
 
 Em produção, forneça `DATABASE_URL`, `ACCESS_TOKEN_SECRET` e as credenciais por
 um gerenciador de segredos.
+
+Para rotacionar a chave JWT sem interromper tokens ainda válidos, configure o
+novo valor em `ACCESS_TOKEN_SECRET` e mantenha temporariamente o anterior em
+`ACCESS_TOKEN_PREVIOUS_SECRET`. Remova o segredo anterior após o prazo máximo dos
+tokens.
+
+## Operação e backups
+
+As orientações de backup, restauração, limites de recursos e recuperação estão em
+`docs/OPERACAO.md`. O script `scripts/backup_database.sh` cria um backup comprimido
+e valida sua integridade.

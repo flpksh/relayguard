@@ -6,3 +6,6 @@ htmlcov/
 .mypy_cache/
 __pycache__/
 *.py[cod]
+build/
+dist/
+backups/

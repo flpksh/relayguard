@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "relayguard"
 version = "0.2.0"
 description = "Reliable webhook delivery and observability platform"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.15"
 dependencies = [
   "alembic==1.19.1",
   "argon2-cffi==25.1.0",
@@ -50,6 +50,7 @@ show_missing = true
 [tool.ruff]
 target-version = "py312"
 line-length = 88
+exclude = ["build", "dist", "backups"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC"]

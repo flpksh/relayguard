@@ -14,7 +14,7 @@ router = APIRouter(prefix="/organizations")
 async def load_organization(session: SessionDep, organization_id: UUID) -> Organization:
     organization = await OrganizationRepository.get_by_id(session, organization_id)
     if organization is None:
-        raise HTTPException(status_code=404, detail="organization not found")
+        raise HTTPException(status_code=404, detail="organização não encontrada")
     return organization
 
 

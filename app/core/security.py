@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import jwt
 from argon2 import PasswordHasher
@@ -16,6 +16,7 @@ password_hasher = PasswordHasher()
 class TokenClaims:
     user_id: UUID
     organization_id: UUID
+    token_version: int
 
 
 def hash_password(password: str) -> str:
@@ -29,7 +30,9 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
-def create_access_token(user_id: UUID, organization_id: UUID) -> str:
+def create_access_token(
+    user_id: UUID, organization_id: UUID, token_version: int
+) -> str:
     settings = get_settings()
     now = datetime.now(UTC)
     payload = {
@@ -37,7 +40,9 @@ def create_access_token(user_id: UUID, organization_id: UUID) -> str:
         "org": str(organization_id),
         "iat": now,
         "exp": now + timedelta(minutes=settings.access_token_expire_minutes),
-        "jti": uuid4().hex,
+        "iss": settings.access_token_issuer,
+        "aud": settings.access_token_audience,
+        "ver": token_version,
     }
     return jwt.encode(
         payload,
@@ -48,16 +53,27 @@ def create_access_token(user_id: UUID, organization_id: UUID) -> str:
 
 def decode_access_token(token: str) -> TokenClaims | None:
     settings = get_settings()
-    try:
-        payload = jwt.decode(
-            token,
-            settings.access_token_secret.get_secret_value(),
-            algorithms=[settings.access_token_algorithm],
-            options={"require": ["sub", "org", "iat", "exp", "jti"]},
-        )
-        return TokenClaims(
-            user_id=UUID(payload["sub"]),
-            organization_id=UUID(payload["org"]),
-        )
-    except (InvalidTokenError, KeyError, TypeError, ValueError):
-        return None
+    secrets = [settings.access_token_secret.get_secret_value()]
+    if settings.access_token_previous_secret is not None:
+        secrets.append(settings.access_token_previous_secret.get_secret_value())
+    for secret in secrets:
+        try:
+            payload = jwt.decode(
+                token,
+                secret,
+                algorithms=[settings.access_token_algorithm],
+                audience=settings.access_token_audience,
+                issuer=settings.access_token_issuer,
+                options={"require": ["sub", "org", "iat", "exp", "iss", "aud", "ver"]},
+            )
+            token_version = payload["ver"]
+            if not isinstance(token_version, int) or token_version < 0:
+                return None
+            return TokenClaims(
+                user_id=UUID(payload["sub"]),
+                organization_id=UUID(payload["org"]),
+                token_version=token_version,
+            )
+        except (InvalidTokenError, KeyError, TypeError, ValueError):
+            continue
+    return None

@@ -1,6 +1,9 @@
 services:
   db:
     image: postgres:17-alpine
+    restart: unless-stopped
+    cpus: ${DB_CPUS:-1.0}
+    mem_limit: ${DB_MEMORY:-512m}
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-relayguard}
       POSTGRES_USER: ${POSTGRES_USER:-relayguard}
@@ -17,6 +20,9 @@ services:
     build:
       context: .
       target: runtime
+    restart: unless-stopped
+    cpus: ${API_CPUS:-1.0}
+    mem_limit: ${API_MEMORY:-512m}
     env_file: .env
     ports:
       - "${HOST_PORT:-8010}:${APP_PORT:-8000}"
@@ -29,16 +35,34 @@ services:
       timeout: 3s
       retries: 10
 
+  db_test:
+    image: postgres:17-alpine
+    profiles: ["quality"]
+    environment:
+      POSTGRES_DB: relayguard_test
+      POSTGRES_USER: relayguard
+      POSTGRES_PASSWORD: relayguard
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U relayguard -d relayguard_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    tmpfs:
+      - /var/lib/postgresql/data
+
   quality:
     build:
       context: .
       target: development
     env_file: .env
+    environment:
+      APP_ENV: test
+      DATABASE_URL: postgresql+asyncpg://relayguard:relayguard@db_test:5432/relayguard_test
     profiles: ["quality"]
     depends_on:
-      db:
+      db_test:
         condition: service_healthy
-    command: pytest --cov=app --cov-report=term-missing
+    command: sh -c "alembic upgrade head && pytest --cov=app --cov-report=term-missing"
 
 volumes:
   postgres_data:
